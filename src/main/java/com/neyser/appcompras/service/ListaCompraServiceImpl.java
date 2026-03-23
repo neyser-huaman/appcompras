@@ -24,10 +24,11 @@ public class ListaCompraServiceImpl implements ListaCompraService {
     @Override
     public void guardar(ListaCompra listaCompra) {
         if (listaCompra.getId() == null) {
-            Estado estadoPendiente = estadoRepository.findByNombre("PENDIENTE")
+            Estado estadoPendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE")
                     .orElseThrow(() -> new RuntimeException("Estado PENDIENTE no encontrado"));
             listaCompra.setEstado(estadoPendiente);
         }
+
         listaCompraRepository.save(listaCompra);
     }
 

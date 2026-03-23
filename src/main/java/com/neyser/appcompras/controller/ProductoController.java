@@ -1,47 +1,82 @@
 package com.neyser.appcompras.controller;
 
 import com.neyser.appcompras.model.Producto;
-import com.neyser.appcompras.service.ProductoService;
-import lombok.RequiredArgsConstructor;
+import com.neyser.appcompras.repository.ProductoRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/productos")
-@RequiredArgsConstructor
 public class ProductoController {
 
-    private final ProductoService productoService;
+    private final ProductoRepository productoRepository;
+
+    public ProductoController(ProductoRepository productoRepository) {
+        this.productoRepository = productoRepository;
+    }
 
     @GetMapping
     public String listar(Model model) {
-        model.addAttribute("productos", productoService.listarTodos());
+        List<Producto> productos = productoRepository.findAll();
+        model.addAttribute("productos", productos);
         return "productos/productos";
     }
 
     @GetMapping("/nuevo")
-    public String mostrarFormulario(Model model) {
-        model.addAttribute("producto", new Producto());
-        return "productos/producto-form";
-    }
-
-    @PostMapping
-    public String guardar(@ModelAttribute Producto producto) {
-        productoService.guardar(producto);
-        return "redirect:/productos";
-    }
-
-    @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model) {
-        Producto producto = productoService.buscarPorId(id);
+    public String nuevo(Model model) {
+        Producto producto = new Producto();
+        producto.setActivo(true);
         model.addAttribute("producto", producto);
         return "productos/producto-form";
     }
 
+    @GetMapping("/editar/{id}")
+    public String editar(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        Optional<Producto> productoOpt = productoRepository.findById(id);
+
+        if (productoOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "El producto no existe");
+            return "redirect:/productos";
+        }
+
+        model.addAttribute("producto", productoOpt.get());
+        return "productos/producto-form";
+    }
+
+    @PostMapping("/guardar")
+    public String guardar(@ModelAttribute("producto") Producto producto,
+                          RedirectAttributes redirectAttributes) {
+
+        if (producto.getActivo() == null) {
+            producto.setActivo(true);
+        }
+
+        productoRepository.save(producto);
+        redirectAttributes.addFlashAttribute("mensaje", "Producto guardado correctamente");
+        return "redirect:/productos";
+    }
+
     @GetMapping("/toggle/{id}")
-    public String cambiarEstado(@PathVariable Long id) {
-        productoService.cambiarEstado(id);
+    public String toggle(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        Optional<Producto> productoOpt = productoRepository.findById(id);
+
+        if (productoOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "El producto no existe");
+            return "redirect:/productos";
+        }
+
+        Producto producto = productoOpt.get();
+        producto.setActivo(!producto.getActivo());
+        productoRepository.save(producto);
+
+        redirectAttributes.addFlashAttribute("mensaje",
+                producto.getActivo() ? "Producto activado correctamente" : "Producto desactivado correctamente");
+
         return "redirect:/productos";
     }
 }

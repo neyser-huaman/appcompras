@@ -19,7 +19,7 @@ public class ItemListaCompraServiceImpl implements ItemListaCompraService {
     @Override
     public void guardar(ItemListaCompra itemListaCompra) {
         if (itemListaCompra.getEstado() == null) {
-            Estado pendiente = estadoRepository.findByNombre("PENDIENTE")
+            Estado pendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE")
                     .orElseThrow(() -> new RuntimeException("Estado PENDIENTE no encontrado"));
             itemListaCompra.setEstado(pendiente);
         }
@@ -48,7 +48,7 @@ public class ItemListaCompraServiceImpl implements ItemListaCompraService {
         ItemListaCompra item = itemListaCompraRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Item no encontrado con id: " + itemId));
 
-        Estado comprado = estadoRepository.findByNombre("COMPRADO")
+        Estado comprado = estadoRepository.findByNombreIgnoreCase("COMPRADO")
                 .orElseThrow(() -> new RuntimeException("Estado COMPRADO no encontrado"));
 
         item.setEstado(comprado);
@@ -60,7 +60,7 @@ public class ItemListaCompraServiceImpl implements ItemListaCompraService {
         ItemListaCompra item = itemListaCompraRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Item no encontrado con id: " + itemId));
 
-        Estado pendiente = estadoRepository.findByNombre("PENDIENTE")
+        Estado pendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE")
                 .orElseThrow(() -> new RuntimeException("Estado PENDIENTE no encontrado"));
 
         item.setEstado(pendiente);
