@@ -1,37 +1,18 @@
 package com.neyser.appcompras.service;
 
 import com.neyser.appcompras.model.Producto;
-import com.neyser.appcompras.repository.ProductoRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
-@RequiredArgsConstructor
-public class ProductoService {
+public interface ProductoService {
 
-    private final ProductoRepository productoRepository;
+    List<Producto> listarTodos();
 
-    public List<Producto> listarTodos() {
-        return productoRepository.findAll();
-    }
+    List<Producto> listarActivos();
 
-    public Producto guardar(Producto producto) {
-        if (producto.getActivo() == null) {
-            producto.setActivo(true);
-        }
-        return productoRepository.save(producto);
-    }
+    void guardar(Producto producto);
 
-    public Producto buscarPorId(Long id) {
-        return productoRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
-    }
+    Producto buscarPorId(Long id);
 
-    public void cambiarEstado(Long id) {
-        Producto producto = buscarPorId(id);
-        producto.setActivo(!producto.getActivo());
-        productoRepository.save(producto);
-    }
+    void cambiarEstado(Long id);
 }

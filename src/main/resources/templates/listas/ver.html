@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Detalle Lista</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-4">
+    <h1 class="mb-3" th:text="${listaCompra.nombre}">Detalle Lista</h1>
+
+    <div class="mb-3">
+        <strong>Número:</strong> <span th:text="${listaCompra.numero}"></span><br>
+        <strong>Fecha:</strong> <span th:text="${listaCompra.fecha}"></span><br>
+        <strong>Estado:</strong> <span th:text="${listaCompra.estado.nombre}"></span><br>
+        <strong>Observación:</strong> <span th:text="${listaCompra.observacion}"></span>
+    </div>
+
+    <a th:href="@{/listas/{listaId}/items/nuevo(listaId=${listaCompra.id})}"
+       class="btn btn-primary mb-3">
+        Agregar producto
+    </a>
+
+    <h2>Detalle</h2>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+        <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Peso</th>
+            <th>Precio</th>
+            <th>Estado Item</th>
+            <th>Observación</th>
+            <th>Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${listaCompra.items}">
+            <td th:text="${item.producto.nombre}"></td>
+
+            <td>
+                <span th:if="${item.cantidad != null}" th:text="${item.cantidad}"></span>
+                <span th:if="${item.cantidad == null}">-</span>
+            </td>
+
+            <td>
+                <span th:if="${item.peso != null}" th:text="${item.peso}"></span>
+                <span th:if="${item.peso == null}">-</span>
+            </td>
+
+            <td>
+                <span th:if="${item.precio != null}" th:text="${item.precio}"></span>
+                <span th:if="${item.precio == null}">0</span>
+            </td>
+
+            <td>
+                <span th:if="${item.estado != null and item.estado.nombre == 'COMPRADO'}"
+                      class="badge bg-success"
+                      th:text="${item.estado.nombre}"></span>
+
+                <span th:if="${item.estado != null and item.estado.nombre == 'PENDIENTE'}"
+                      class="badge bg-warning text-dark"
+                      th:text="${item.estado.nombre}"></span>
+
+                <span th:if="${item.estado != null and item.estado.nombre != 'COMPRADO' and item.estado.nombre != 'PENDIENTE'}"
+                      class="badge bg-secondary"
+                      th:text="${item.estado.nombre}"></span>
+
+                <span th:if="${item.estado == null}"
+                      class="badge bg-secondary">
+                    SIN ESTADO
+                </span>
+            </td>
+
+            <td th:text="${item.observacion}"></td>
+
+            <td>
+                <a th:if="${item.estado != null and item.estado.nombre == 'PENDIENTE'}"
+                   th:href="@{/listas/{listaId}/items/comprado/{itemId}(listaId=${listaCompra.id}, itemId=${item.id})}"
+                   class="btn btn-success btn-sm">
+                    Marcar comprado
+                </a>
+
+                <a th:if="${item.estado != null and item.estado.nombre == 'COMPRADO'}"
+                   th:href="@{/listas/{listaId}/items/pendiente/{itemId}(listaId=${listaCompra.id}, itemId=${item.id})}"
+                   class="btn btn-warning btn-sm">
+                    Marcar pendiente
+                </a>
+
+                <a th:href="@{/listas/{listaId}/items/eliminar/{itemId}(listaId=${listaCompra.id}, itemId=${item.id})}"
+                   class="btn btn-danger btn-sm">
+                    Eliminar
+                </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <a th:href="@{/listas}" class="btn btn-secondary">Volver</a>
+</div>
+
+</body>
+</html>

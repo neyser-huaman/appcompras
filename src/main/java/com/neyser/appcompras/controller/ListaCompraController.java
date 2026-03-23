@@ -17,18 +17,38 @@ public class ListaCompraController {
     @GetMapping
     public String listar(Model model) {
         model.addAttribute("listas", listaCompraService.listarTodas());
-        return "listas";
+        return "listas/listas";
     }
 
     @GetMapping("/nueva")
     public String mostrarFormulario(Model model) {
         model.addAttribute("listaCompra", new ListaCompra());
-        return "lista-form";
+        return "listas/lista-form";
     }
 
     @PostMapping
     public String guardar(@ModelAttribute ListaCompra listaCompra) {
         listaCompraService.guardar(listaCompra);
+        return "redirect:/listas";
+    }
+
+    @GetMapping("/{id}")
+    public String verDetalle(@PathVariable("id") Long id, Model model) {
+        ListaCompra listaCompra = listaCompraService.buscarPorId(id);
+        model.addAttribute("listaCompra", listaCompra);
+        return "listas/ver";
+    }
+
+    @GetMapping("/editar/{id}")
+    public String editar(@PathVariable("id") Long id, Model model) {
+        ListaCompra listaCompra = listaCompraService.buscarPorId(id);
+        model.addAttribute("listaCompra", listaCompra);
+        return "listas/lista-form";
+    }
+
+    @GetMapping("/eliminar/{id}")
+    public String eliminar(@PathVariable("id") Long id) {
+        listaCompraService.eliminar(id);
         return "redirect:/listas";
     }
 }

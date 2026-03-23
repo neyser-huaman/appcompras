@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Listas de Compra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container mt-4">
+    <h1 class="mb-4">Listas de Compra</h1>
+
+    <a th:href="@{/listas/nueva}" class="btn btn-primary mb-3">Nueva Lista</a>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+        <tr>
+            <th>Número</th>
+            <th>Nombre</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th>Productos</th>
+            <th>Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="lista : ${listas}">
+            <td th:text="${lista.numero}"></td>
+            <td th:text="${lista.nombre}"></td>
+            <td th:text="${lista.fecha}"></td>
+            <td th:text="${lista.estado.nombre}"></td>
+            <td th:text="${#lists.size(lista.items)}"></td>
+            <td>
+                <a th:href="@{/listas/{id}(id=${lista.id})}" class="btn btn-info btn-sm">Ver</a>
+                <a th:href="@{/listas/editar/{id}(id=${lista.id})}" class="btn btn-warning btn-sm">Editar</a>
+                <a th:href="@{/listas/eliminar/{id}(id=${lista.id})}" class="btn btn-danger btn-sm">Eliminar</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

@@ -19,10 +19,11 @@ public class ItemListaCompra {
 
     private Integer cantidad;
 
-    @Column(precision = 10, scale = 2)
-    private BigDecimal precio;
+    private BigDecimal peso;
 
     private String observacion;
+
+    private BigDecimal precio;
 
     @ManyToOne
     @JoinColumn(name = "estado_id")
@@ -35,5 +36,4 @@ public class ItemListaCompra {
     @ManyToOne
     @JoinColumn(name = "producto_id")
     private Producto producto;
-
 }
