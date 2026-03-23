@@ -20,11 +20,11 @@ public class ListaCompraService {
         return listaCompraRepository.findAll();
     }
 
-    public List<Estado> listarEstadosActivos() {
-        return estadoRepository.findByActivoTrue();
-    }
-
     public ListaCompra guardar(ListaCompra listaCompra) {
+        Estado estadoPendiente = estadoRepository.findByNombre("PENDIENTE")
+                .orElseThrow(() -> new RuntimeException("No existe el estado PENDIENTE"));
+
+        listaCompra.setEstado(estadoPendiente);
         return listaCompraRepository.save(listaCompra);
     }
 }

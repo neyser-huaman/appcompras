@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Listas de compra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-4">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Listas de compra</h1>
+    <div class="d-flex gap-2">
+        <a th:href="@{/productos}" class="btn btn-outline-secondary">Productos</a>
+        <a th:href="@{/listas/nueva}" class="btn btn-primary">Nueva lista</a>
+    </div>
+</div>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+    <tr>
+        <th>ID</th>
+        <th>Número</th>
+        <th>Nombre</th>
+        <th>Fecha</th>
+        <th>Observación</th>
+        <th>Estado</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="lista : ${listas}">
+        <td th:text="${lista.id}"></td>
+        <td th:text="${lista.numero}"></td>
+        <td th:text="${lista.nombre}"></td>
+        <td th:text="${lista.fecha}"></td>
+        <td th:text="${lista.observacion}"></td>
+        <td th:text="${lista.estado != null ? lista.estado.nombre : 'Sin estado'}"></td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

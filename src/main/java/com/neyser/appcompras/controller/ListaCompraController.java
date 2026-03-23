@@ -5,9 +5,7 @@ import com.neyser.appcompras.service.ListaCompraService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
 @RequestMapping("/listas")
@@ -25,12 +23,11 @@ public class ListaCompraController {
     @GetMapping("/nueva")
     public String mostrarFormulario(Model model) {
         model.addAttribute("listaCompra", new ListaCompra());
-        model.addAttribute("estados", listaCompraService.listarEstadosActivos());
         return "lista-form";
     }
 
     @PostMapping
-    public String guardar(ListaCompra listaCompra) {
+    public String guardar(@ModelAttribute ListaCompra listaCompra) {
         listaCompraService.guardar(listaCompra);
         return "redirect:/listas";
     }
