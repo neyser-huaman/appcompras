@@ -92,6 +92,7 @@ public class ListaCompraController {
         }
 
         model.addAttribute("listaCompra", listaOpt.get());
+        model.addAttribute("estados", estadoRepository.findAll());
         return "listas/ver";
     }
 

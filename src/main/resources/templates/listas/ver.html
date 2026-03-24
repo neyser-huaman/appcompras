@@ -80,7 +80,7 @@
                         <th>Cantidad</th>
                         <th>Peso</th>
                         <th>Precio</th>
-                        <th>Estado</th>
+                        <th style="min-width: 260px;">Estado</th>
                         <th>Observación</th>
                         <th class="text-center">Acciones</th>
                     </tr>
@@ -91,8 +91,28 @@
                         <td th:text="${item.cantidad != null ? item.cantidad : '-'}">-</td>
                         <td th:text="${item.peso != null ? item.peso : '-'}">-</td>
                         <td th:text="${item.precio != null ? item.precio : '-'}">-</td>
-                        <td th:text="${item.estado != null ? item.estado.nombre : 'Estado'}">Estado</td>
+
+                        <td>
+                            <form th:action="@{/listas/{listaId}/items/cambiar-estado/{id}(listaId=${listaCompra.id}, id=${item.id})}"
+                                  method="post"
+                                  class="d-flex gap-2 align-items-center">
+
+                                <select name="estadoId" class="form-select form-select-sm">
+                                    <option th:each="estado : ${estados}"
+                                            th:value="${estado.id}"
+                                            th:text="${estado.nombre}"
+                                            th:selected="${item.estado != null and item.estado.id == estado.id}">
+                                    </option>
+                                </select>
+
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                    Guardar
+                                </button>
+                            </form>
+                        </td>
+
                         <td th:text="${item.observacion != null and !#strings.isEmpty(item.observacion) ? item.observacion : '-'}">-</td>
+
                         <td class="text-center">
                             <div class="d-flex flex-wrap justify-content-center gap-2">
                                 <a th:href="@{/listas/{listaId}/items/editar/{id}(listaId=${listaCompra.id}, id=${item.id})}"
