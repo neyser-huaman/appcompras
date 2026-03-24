@@ -1,10 +1,13 @@
 package com.neyser.appcompras.controller;
 
 import com.neyser.appcompras.model.Estado;
+import com.neyser.appcompras.model.ItemListaCompra;
 import com.neyser.appcompras.model.ListaCompra;
+import com.neyser.appcompras.model.Producto;
 import com.neyser.appcompras.repository.EstadoRepository;
+import com.neyser.appcompras.repository.ItemListaCompraRepository;
 import com.neyser.appcompras.repository.ListaCompraRepository;
-import lombok.RequiredArgsConstructor;
+import com.neyser.appcompras.repository.ProductoRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,43 +19,36 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping("/listas")
-@RequiredArgsConstructor
 public class ListaCompraController {
 
     private final ListaCompraRepository listaCompraRepository;
+    private final ItemListaCompraRepository itemListaCompraRepository;
+    private final ProductoRepository productoRepository;
     private final EstadoRepository estadoRepository;
+
+    public ListaCompraController(ListaCompraRepository listaCompraRepository,
+                                 ItemListaCompraRepository itemListaCompraRepository,
+                                 ProductoRepository productoRepository,
+                                 EstadoRepository estadoRepository) {
+        this.listaCompraRepository = listaCompraRepository;
+        this.itemListaCompraRepository = itemListaCompraRepository;
+        this.productoRepository = productoRepository;
+        this.estadoRepository = estadoRepository;
+    }
 
     @GetMapping
     public String listar(Model model) {
         List<ListaCompra> listas = listaCompraRepository.findAll();
         model.addAttribute("listas", listas);
-        return "listas/lista";
+        return "listas/listas";
     }
 
     @GetMapping("/nueva")
     public String nueva(Model model) {
-        ListaCompra listaCompra = new ListaCompra();
-        listaCompra.setFecha(LocalDate.now());
-        model.addAttribute("listaCompra", listaCompra);
-        return "listas/form";
-    }
-
-    @PostMapping("/guardar")
-    public String guardar(@ModelAttribute ListaCompra listaCompra,
-                          RedirectAttributes redirectAttributes) {
-
-        if (listaCompra.getEstado() == null) {
-            Optional<Estado> estadoPendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE");
-            estadoPendiente.ifPresent(listaCompra::setEstado);
-        }
-
-        if (listaCompra.getFecha() == null) {
-            listaCompra.setFecha(LocalDate.now());
-        }
-
-        listaCompraRepository.save(listaCompra);
-        redirectAttributes.addFlashAttribute("mensaje", "Lista guardada correctamente");
-        return "redirect:/listas";
+        ListaCompra lista = new ListaCompra();
+        lista.setFecha(LocalDate.now());
+        model.addAttribute("lista", lista);
+        return "listas/lista-form";
     }
 
     @GetMapping("/editar/{id}")
@@ -64,13 +60,31 @@ public class ListaCompraController {
             return "redirect:/listas";
         }
 
-        model.addAttribute("listaCompra", listaOpt.get());
-        return "listas/form";
+        model.addAttribute("lista", listaOpt.get());
+        return "listas/lista-form";
+    }
+
+    @PostMapping("/guardar")
+    public String guardar(@ModelAttribute("lista") ListaCompra lista,
+                          RedirectAttributes redirectAttributes) {
+
+        if (lista.getFecha() == null) {
+            lista.setFecha(LocalDate.now());
+        }
+
+        if (lista.getEstado() == null) {
+            Estado pendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE").orElse(null);
+            lista.setEstado(pendiente);
+        }
+
+        listaCompraRepository.save(lista);
+        redirectAttributes.addFlashAttribute("mensaje", "Lista guardada correctamente");
+        return "redirect:/listas";
     }
 
     @GetMapping("/ver/{id}")
     public String ver(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        Optional<ListaCompra> listaOpt = listaCompraRepository.findDetalleById(id);
+        Optional<ListaCompra> listaOpt = listaCompraRepository.findById(id);
 
         if (listaOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("mensaje", "La lista no existe");
@@ -81,15 +95,25 @@ public class ListaCompraController {
         return "listas/ver";
     }
 
-    @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        if (!listaCompraRepository.existsById(id)) {
+    @GetMapping("/{listaId}/items/nuevo")
+    public String nuevoItem(@PathVariable Long listaId, Model model, RedirectAttributes redirectAttributes) {
+        Optional<ListaCompra> listaOpt = listaCompraRepository.findById(listaId);
+
+        if (listaOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("mensaje", "La lista no existe");
             return "redirect:/listas";
         }
 
-        listaCompraRepository.deleteById(id);
-        redirectAttributes.addFlashAttribute("mensaje", "Lista eliminada correctamente");
-        return "redirect:/listas";
+        List<Producto> productos = productoRepository.findByActivoTrue();
+
+        ItemListaCompra item = new ItemListaCompra();
+        item.setListaCompra(listaOpt.get());
+        item.setProducto(new Producto());
+
+        model.addAttribute("item", item);
+        model.addAttribute("listaCompra", listaOpt.get());
+        model.addAttribute("productos", productos);
+
+        return "items/form";
     }
 }
