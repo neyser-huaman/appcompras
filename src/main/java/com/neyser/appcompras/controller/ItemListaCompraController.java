@@ -8,6 +8,7 @@ import com.neyser.appcompras.repository.EstadoRepository;
 import com.neyser.appcompras.repository.ItemListaCompraRepository;
 import com.neyser.appcompras.repository.ListaCompraRepository;
 import com.neyser.appcompras.repository.ProductoRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import java.util.Optional;
 
 @Controller
 @RequestMapping("/listas/{listaId}/items")
+@RequiredArgsConstructor
 public class ItemListaCompraController {
 
     private final ItemListaCompraRepository itemListaCompraRepository;
@@ -26,20 +28,10 @@ public class ItemListaCompraController {
     private final ProductoRepository productoRepository;
     private final EstadoRepository estadoRepository;
 
-    public ItemListaCompraController(ItemListaCompraRepository itemListaCompraRepository,
-                                     ListaCompraRepository listaCompraRepository,
-                                     ProductoRepository productoRepository,
-                                     EstadoRepository estadoRepository) {
-        this.itemListaCompraRepository = itemListaCompraRepository;
-        this.listaCompraRepository = listaCompraRepository;
-        this.productoRepository = productoRepository;
-        this.estadoRepository = estadoRepository;
-    }
-
-    @PostMapping("/guardar")
-    public String guardar(@PathVariable Long listaId,
-                          @ModelAttribute("item") ItemListaCompra item,
-                          RedirectAttributes redirectAttributes) {
+    @GetMapping("/nuevo")
+    public String nuevo(@PathVariable Long listaId,
+                        Model model,
+                        RedirectAttributes redirectAttributes) {
 
         Optional<ListaCompra> listaOpt = listaCompraRepository.findById(listaId);
         if (listaOpt.isEmpty()) {
@@ -47,43 +39,107 @@ public class ItemListaCompraController {
             return "redirect:/listas";
         }
 
-        boolean cantidadVacia = item.getCantidad() == null || item.getCantidad() <= 0;
-        boolean pesoVacio = item.getPeso() == null || item.getPeso().compareTo(BigDecimal.ZERO) <= 0;
-
-        if (cantidadVacia && pesoVacio) {
-            redirectAttributes.addFlashAttribute("mensaje", "Debe ingresar una cantidad o un peso mayor a cero");
-            if (item.getId() == null) {
-                return "redirect:/listas/" + listaId + "/items/nuevo";
-            } else {
-                return "redirect:/listas/" + listaId + "/items/editar/" + item.getId();
-            }
-        }
-
+        ItemListaCompra item = new ItemListaCompra();
         item.setListaCompra(listaOpt.get());
 
-        if (item.getProducto() != null && item.getProducto().getId() != null) {
-            Producto producto = productoRepository.findById(item.getProducto().getId()).orElse(null);
-            item.setProducto(producto);
-        } else {
-            redirectAttributes.addFlashAttribute("mensaje", "Debe seleccionar un producto");
-            if (item.getId() == null) {
-                return "redirect:/listas/" + listaId + "/items/nuevo";
-            } else {
-                return "redirect:/listas/" + listaId + "/items/editar/" + item.getId();
-            }
+        List<Producto> productos = productoRepository.findAll();
+
+        model.addAttribute("listaCompra", listaOpt.get());
+        model.addAttribute("item", item);
+        model.addAttribute("productos", productos);
+        model.addAttribute("estados", estadoRepository.findAll());
+
+        return "items/form";
+    }
+
+    @GetMapping("/editar/{itemId}")
+    public String editar(@PathVariable Long listaId,
+                         @PathVariable Long itemId,
+                         Model model,
+                         RedirectAttributes redirectAttributes) {
+
+        Optional<ListaCompra> listaOpt = listaCompraRepository.findById(listaId);
+        if (listaOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "La lista no existe");
+            return "redirect:/listas";
         }
 
-        if (item.getId() == null) {
-            Estado pendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE").orElse(null);
-            item.setEstado(pendiente);
-            item.setPrecio(null);
+        Optional<ItemListaCompra> itemOpt = itemListaCompraRepository.findByIdAndListaCompraId(itemId, listaId);
+        if (itemOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "El item no existe o no pertenece a la lista");
+            return "redirect:/listas/ver/" + listaId;
+        }
+
+        model.addAttribute("listaCompra", listaOpt.get());
+        model.addAttribute("item", itemOpt.get());
+        model.addAttribute("productos", productoRepository.findAll());
+        model.addAttribute("estados", estadoRepository.findAll());
+
+        return "items/form";
+    }
+
+    @PostMapping("/guardar")
+    public String guardar(@PathVariable Long listaId,
+                          @ModelAttribute("item") ItemListaCompra formItem,
+                          RedirectAttributes redirectAttributes,
+                          Model model) {
+
+        Optional<ListaCompra> listaOpt = listaCompraRepository.findById(listaId);
+        if (listaOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "La lista no existe");
+            return "redirect:/listas";
+        }
+
+        ListaCompra lista = listaOpt.get();
+        ItemListaCompra item;
+
+        if (formItem.getId() != null) {
+            Optional<ItemListaCompra> itemOpt = itemListaCompraRepository.findByIdAndListaCompraId(formItem.getId(), listaId);
+
+            if (itemOpt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("mensaje", "El item no existe o no pertenece a la lista");
+                return "redirect:/listas/ver/" + listaId;
+            }
+
+            item = itemOpt.get();
         } else {
-            if (item.getEstado() != null && item.getEstado().getId() != null) {
-                Estado estado = estadoRepository.findById(item.getEstado().getId()).orElse(null);
-                item.setEstado(estado);
-            } else {
-                Estado pendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE").orElse(null);
-                item.setEstado(pendiente);
+            item = new ItemListaCompra();
+            item.setListaCompra(lista);
+        }
+
+        if (formItem.getProducto() == null || formItem.getProducto().getId() == null) {
+            redirectAttributes.addFlashAttribute("mensaje", "Debe seleccionar un producto");
+            return redireccionFormulario(listaId, formItem.getId());
+        }
+
+        Optional<Producto> productoOpt = productoRepository.findById(formItem.getProducto().getId());
+        if (productoOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "El producto seleccionado no existe");
+            return redireccionFormulario(listaId, formItem.getId());
+        }
+
+        boolean cantidadValida = formItem.getCantidad() != null && formItem.getCantidad() > 0;
+        boolean pesoValido = formItem.getPeso() != null && formItem.getPeso().compareTo(BigDecimal.ZERO) > 0;
+
+        if (!cantidadValida && !pesoValido) {
+            redirectAttributes.addFlashAttribute("mensaje", "Debe ingresar una cantidad o un peso mayor a cero");
+            return redireccionFormulario(listaId, formItem.getId());
+        }
+
+        item.setProducto(productoOpt.get());
+        item.setCantidad(formItem.getCantidad());
+        item.setPeso(formItem.getPeso());
+        item.setPrecio(formItem.getPrecio());
+        item.setObservacion(formItem.getObservacion());
+        item.setListaCompra(lista);
+
+        if (formItem.getId() == null) {
+            Optional<Estado> pendienteOpt = estadoRepository.findByNombreIgnoreCase("PENDIENTE");
+            pendienteOpt.ifPresent(item::setEstado);
+        } else {
+            if (formItem.getEstado() != null && formItem.getEstado().getId() != null) {
+                Optional<Estado> estadoOpt = estadoRepository.findById(formItem.getEstado().getId());
+                estadoOpt.ifPresent(item::setEstado);
             }
         }
 
@@ -93,53 +149,27 @@ public class ItemListaCompraController {
         return "redirect:/listas/ver/" + listaId;
     }
 
-    @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long listaId,
-                         @PathVariable Long id,
-                         Model model,
-                         RedirectAttributes redirectAttributes) {
-
-        Optional<ItemListaCompra> itemOpt = itemListaCompraRepository.findById(id);
-        Optional<ListaCompra> listaOpt = listaCompraRepository.findById(listaId);
-
-        if (itemOpt.isEmpty() || listaOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("mensaje", "No se encontró el item o la lista");
-            return "redirect:/listas";
-        }
-
-        ItemListaCompra item = itemOpt.get();
-
-        if (item.getProducto() == null) {
-            item.setProducto(new Producto());
-        }
-
-        if (item.getEstado() == null) {
-            item.setEstado(new Estado());
-        }
-
-        List<Producto> productos = productoRepository.findByActivoTrue();
-        List<Estado> estados = estadoRepository.findAll();
-
-        model.addAttribute("item", item);
-        model.addAttribute("listaCompra", listaOpt.get());
-        model.addAttribute("productos", productos);
-        model.addAttribute("estados", estados);
-
-        return "items/form";
-    }
-
-    @GetMapping("/eliminar/{id}")
+    @GetMapping("/eliminar/{itemId}")
     public String eliminar(@PathVariable Long listaId,
-                           @PathVariable Long id,
+                           @PathVariable Long itemId,
                            RedirectAttributes redirectAttributes) {
 
-        if (itemListaCompraRepository.existsById(id)) {
-            itemListaCompraRepository.deleteById(id);
-            redirectAttributes.addFlashAttribute("mensaje", "Item eliminado correctamente");
-        } else {
-            redirectAttributes.addFlashAttribute("mensaje", "El item no existe");
+        Optional<ItemListaCompra> itemOpt = itemListaCompraRepository.findByIdAndListaCompraId(itemId, listaId);
+
+        if (itemOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "El item no existe o no pertenece a la lista");
+            return "redirect:/listas/ver/" + listaId;
         }
 
+        itemListaCompraRepository.delete(itemOpt.get());
+        redirectAttributes.addFlashAttribute("mensaje", "Item eliminado correctamente");
         return "redirect:/listas/ver/" + listaId;
+    }
+
+    private String redireccionFormulario(Long listaId, Long itemId) {
+        if (itemId == null) {
+            return "redirect:/listas/" + listaId + "/items/nuevo";
+        }
+        return "redirect:/listas/" + listaId + "/items/editar/" + itemId;
     }
 }
