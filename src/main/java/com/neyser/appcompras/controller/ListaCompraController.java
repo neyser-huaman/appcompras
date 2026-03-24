@@ -85,9 +85,7 @@ public class ListaCompraController {
             return "redirect:/listas";
         }
 
-        ListaCompra listaCompra = listaOpt.get();
-
-        model.addAttribute("listaCompra", listaCompra);
+        model.addAttribute("listaCompra", listaOpt.get());
         return "listas/ver";
     }
 
@@ -101,16 +99,14 @@ public class ListaCompraController {
         }
 
         List<Producto> productos = productoRepository.findByActivoTrue();
-        List<Estado> estados = estadoRepository.findAll();
 
         ItemListaCompra item = new ItemListaCompra();
+        item.setListaCompra(listaOpt.get());
         item.setProducto(new Producto());
-        item.setEstado(new Estado());
 
         model.addAttribute("item", item);
         model.addAttribute("listaCompra", listaOpt.get());
         model.addAttribute("productos", productos);
-        model.addAttribute("estados", estados);
 
         return "items/form";
     }

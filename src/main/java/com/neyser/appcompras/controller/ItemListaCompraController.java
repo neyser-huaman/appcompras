@@ -13,11 +13,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 @Controller
-@RequestMapping("/items")
+@RequestMapping("/listas/{listaId}/items")
 public class ItemListaCompraController {
 
     private final ItemListaCompraRepository itemListaCompraRepository;
@@ -36,8 +37,8 @@ public class ItemListaCompraController {
     }
 
     @PostMapping("/guardar")
-    public String guardar(@ModelAttribute("item") ItemListaCompra item,
-                          @RequestParam("listaCompra.id") Long listaId,
+    public String guardar(@PathVariable Long listaId,
+                          @ModelAttribute("item") ItemListaCompra item,
                           RedirectAttributes redirectAttributes) {
 
         Optional<ListaCompra> listaOpt = listaCompraRepository.findById(listaId);
@@ -46,21 +47,44 @@ public class ItemListaCompraController {
             return "redirect:/listas";
         }
 
+        boolean cantidadVacia = item.getCantidad() == null || item.getCantidad() <= 0;
+        boolean pesoVacio = item.getPeso() == null || item.getPeso().compareTo(BigDecimal.ZERO) <= 0;
+
+        if (cantidadVacia && pesoVacio) {
+            redirectAttributes.addFlashAttribute("mensaje", "Debe ingresar una cantidad o un peso mayor a cero");
+            if (item.getId() == null) {
+                return "redirect:/listas/" + listaId + "/items/nuevo";
+            } else {
+                return "redirect:/listas/" + listaId + "/items/editar/" + item.getId();
+            }
+        }
+
         item.setListaCompra(listaOpt.get());
 
         if (item.getProducto() != null && item.getProducto().getId() != null) {
             Producto producto = productoRepository.findById(item.getProducto().getId()).orElse(null);
             item.setProducto(producto);
         } else {
-            item.setProducto(null);
+            redirectAttributes.addFlashAttribute("mensaje", "Debe seleccionar un producto");
+            if (item.getId() == null) {
+                return "redirect:/listas/" + listaId + "/items/nuevo";
+            } else {
+                return "redirect:/listas/" + listaId + "/items/editar/" + item.getId();
+            }
         }
 
-        if (item.getEstado() != null && item.getEstado().getId() != null) {
-            Estado estado = estadoRepository.findById(item.getEstado().getId()).orElse(null);
-            item.setEstado(estado);
-        } else {
+        if (item.getId() == null) {
             Estado pendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE").orElse(null);
             item.setEstado(pendiente);
+            item.setPrecio(null);
+        } else {
+            if (item.getEstado() != null && item.getEstado().getId() != null) {
+                Estado estado = estadoRepository.findById(item.getEstado().getId()).orElse(null);
+                item.setEstado(estado);
+            } else {
+                Estado pendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE").orElse(null);
+                item.setEstado(pendiente);
+            }
         }
 
         itemListaCompraRepository.save(item);
@@ -70,8 +94,8 @@ public class ItemListaCompraController {
     }
 
     @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id,
-                         @RequestParam("listaId") Long listaId,
+    public String editar(@PathVariable Long listaId,
+                         @PathVariable Long id,
                          Model model,
                          RedirectAttributes redirectAttributes) {
 
@@ -105,8 +129,8 @@ public class ItemListaCompraController {
     }
 
     @GetMapping("/eliminar/{id}")
-    public String eliminar(@PathVariable Long id,
-                           @RequestParam("listaId") Long listaId,
+    public String eliminar(@PathVariable Long listaId,
+                           @PathVariable Long id,
                            RedirectAttributes redirectAttributes) {
 
         if (itemListaCompraRepository.existsById(id)) {

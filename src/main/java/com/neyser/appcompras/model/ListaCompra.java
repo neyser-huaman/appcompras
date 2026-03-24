@@ -19,8 +19,6 @@ public class ListaCompra {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Integer numero;
-
     private String nombre;
 
     private LocalDate fecha;

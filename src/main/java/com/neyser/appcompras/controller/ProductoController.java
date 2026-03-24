@@ -41,6 +41,7 @@ public class ProductoController {
 
         if (productoOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("mensaje", "El producto no existe");
+            redirectAttributes.addFlashAttribute("tipoMensaje", "danger");
             return "redirect:/productos";
         }
 
@@ -57,7 +58,9 @@ public class ProductoController {
         }
 
         productoRepository.save(producto);
+
         redirectAttributes.addFlashAttribute("mensaje", "Producto guardado correctamente");
+        redirectAttributes.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/productos";
     }
 
@@ -67,15 +70,21 @@ public class ProductoController {
 
         if (productoOpt.isEmpty()) {
             redirectAttributes.addFlashAttribute("mensaje", "El producto no existe");
+            redirectAttributes.addFlashAttribute("tipoMensaje", "danger");
             return "redirect:/productos";
         }
 
         Producto producto = productoOpt.get();
-        producto.setActivo(!producto.getActivo());
+        producto.setActivo(Boolean.FALSE.equals(producto.getActivo()));
         productoRepository.save(producto);
 
-        redirectAttributes.addFlashAttribute("mensaje",
-                producto.getActivo() ? "Producto activado correctamente" : "Producto desactivado correctamente");
+        redirectAttributes.addFlashAttribute(
+                "mensaje",
+                producto.getActivo()
+                        ? "Producto activado correctamente"
+                        : "Producto desactivado correctamente"
+        );
+        redirectAttributes.addFlashAttribute("tipoMensaje", "success");
 
         return "redirect:/productos";
     }

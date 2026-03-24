@@ -34,7 +34,6 @@
                         <thead class="table-light">
                         <tr>
                             <th>ID</th>
-                            <th>Número</th>
                             <th>Nombre</th>
                             <th>Fecha</th>
                             <th>Estado</th>
@@ -45,7 +44,6 @@
                         <tbody>
                         <tr th:each="lista : ${listas}">
                             <td th:text="${lista.id}"></td>
-                            <td th:text="${lista.numero}"></td>
                             <td th:text="${lista.nombre}"></td>
                             <td th:text="${lista.fecha}"></td>
                             <td>
@@ -82,7 +80,6 @@
                         </div>
 
                         <p class="mb-1"><strong>ID:</strong> <span th:text="${lista.id}"></span></p>
-                        <p class="mb-1"><strong>Número:</strong> <span th:text="${lista.numero}"></span></p>
                         <p class="mb-1"><strong>Fecha:</strong> <span th:text="${lista.fecha}"></span></p>
                         <p class="mb-3"><strong>Productos:</strong> <span th:text="${lista.items != null ? #lists.size(lista.items) : 0}"></span></p>
 
