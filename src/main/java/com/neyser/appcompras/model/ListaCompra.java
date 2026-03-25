@@ -3,6 +3,7 @@ package com.neyser.appcompras.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,9 @@ public class ListaCompra {
     private LocalDate fecha;
 
     private String observacion;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal precio = BigDecimal.ZERO;
 
     @ManyToOne
     @JoinColumn(name = "estado_id")
