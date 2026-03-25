@@ -13,7 +13,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,7 +37,7 @@ public class ListaCompraController {
 
     @GetMapping
     public String listar(Model model) {
-        List<ListaCompra> listas = listaCompraRepository.findAll();
+        List<ListaCompra> listas = listaCompraRepository.findAllOrderByIdDesc();
         model.addAttribute("listas", listas);
         return "listas/listas";
     }
@@ -46,31 +45,13 @@ public class ListaCompraController {
     @GetMapping("/nueva")
     public String nueva(Model model) {
         ListaCompra lista = new ListaCompra();
-        lista.setFecha(LocalDate.now());
         model.addAttribute("lista", lista);
-        return "listas/lista-form";
-    }
-
-    @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
-        Optional<ListaCompra> listaOpt = listaCompraRepository.findById(id);
-
-        if (listaOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("mensaje", "La lista no existe");
-            return "redirect:/listas";
-        }
-
-        model.addAttribute("lista", listaOpt.get());
         return "listas/lista-form";
     }
 
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute("lista") ListaCompra lista,
                           RedirectAttributes redirectAttributes) {
-
-        if (lista.getFecha() == null) {
-            lista.setFecha(LocalDate.now());
-        }
 
         if (lista.getEstado() == null) {
             Estado pendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE").orElse(null);
@@ -83,7 +64,9 @@ public class ListaCompraController {
     }
 
     @GetMapping("/ver/{id}")
-    public String ver(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+    public String ver(@PathVariable Long id,
+                      Model model,
+                      RedirectAttributes redirectAttributes) {
         Optional<ListaCompra> listaOpt = listaCompraRepository.findById(id);
 
         if (listaOpt.isEmpty()) {
@@ -92,12 +75,38 @@ public class ListaCompraController {
         }
 
         model.addAttribute("listaCompra", listaOpt.get());
-        model.addAttribute("estados", estadoRepository.findAll());
         return "listas/ver";
     }
 
+    @PostMapping("/marcar-comprado/{id}")
+    public String marcarComoComprado(@PathVariable Long id,
+                                     RedirectAttributes redirectAttributes) {
+        Optional<ListaCompra> listaOpt = listaCompraRepository.findById(id);
+
+        if (listaOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "La lista no existe");
+            return "redirect:/listas";
+        }
+
+        Estado comprado = estadoRepository.findByNombreIgnoreCase("COMPRADO").orElse(null);
+
+        if (comprado == null) {
+            redirectAttributes.addFlashAttribute("mensaje", "No existe el estado COMPRADO en la base de datos");
+            return "redirect:/listas";
+        }
+
+        ListaCompra lista = listaOpt.get();
+        lista.setEstado(comprado);
+        listaCompraRepository.save(lista);
+
+        redirectAttributes.addFlashAttribute("mensaje", "La lista fue marcada como COMPRADO");
+        return "redirect:/listas";
+    }
+
     @GetMapping("/{listaId}/items/nuevo")
-    public String nuevoItem(@PathVariable Long listaId, Model model, RedirectAttributes redirectAttributes) {
+    public String nuevoItem(@PathVariable Long listaId,
+                            Model model,
+                            RedirectAttributes redirectAttributes) {
         Optional<ListaCompra> listaOpt = listaCompraRepository.findById(listaId);
 
         if (listaOpt.isEmpty()) {

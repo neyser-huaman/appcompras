@@ -165,17 +165,10 @@ public class ItemListaCompraController {
         return "items/form";
     }
 
-    @PostMapping("/cambiar-estado/{id}")
-    public String cambiarEstado(@PathVariable Long listaId,
-                                @PathVariable Long id,
-                                @RequestParam("estadoId") Long estadoId,
-                                RedirectAttributes redirectAttributes) {
-
-        Optional<ListaCompra> listaOpt = listaCompraRepository.findById(listaId);
-        if (listaOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("mensaje", "La lista no existe");
-            return "redirect:/listas";
-        }
+    @PostMapping("/marcar-comprado/{id}")
+    public String marcarComprado(@PathVariable Long listaId,
+                                 @PathVariable Long id,
+                                 RedirectAttributes redirectAttributes) {
 
         Optional<ItemListaCompra> itemOpt = itemListaCompraRepository.findById(id);
         if (itemOpt.isEmpty()) {
@@ -190,16 +183,47 @@ public class ItemListaCompraController {
             return "redirect:/listas/ver/" + listaId;
         }
 
-        Optional<Estado> estadoOpt = estadoRepository.findById(estadoId);
-        if (estadoOpt.isEmpty()) {
-            redirectAttributes.addFlashAttribute("mensaje", "El estado seleccionado no existe");
+        Estado comprado = estadoRepository.findByNombreIgnoreCase("COMPRADO").orElse(null);
+        if (comprado == null) {
+            redirectAttributes.addFlashAttribute("mensaje", "No existe el estado COMPRADO en la base de datos");
             return "redirect:/listas/ver/" + listaId;
         }
 
-        item.setEstado(estadoOpt.get());
+        item.setEstado(comprado);
         itemListaCompraRepository.save(item);
 
-        redirectAttributes.addFlashAttribute("mensaje", "Estado del item actualizado correctamente");
+        redirectAttributes.addFlashAttribute("mensaje", "El item fue marcado como COMPRADO");
+        return "redirect:/listas/ver/" + listaId;
+    }
+
+    @PostMapping("/marcar-pendiente/{id}")
+    public String marcarPendiente(@PathVariable Long listaId,
+                                  @PathVariable Long id,
+                                  RedirectAttributes redirectAttributes) {
+
+        Optional<ItemListaCompra> itemOpt = itemListaCompraRepository.findById(id);
+        if (itemOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "El item no existe");
+            return "redirect:/listas/ver/" + listaId;
+        }
+
+        ItemListaCompra item = itemOpt.get();
+
+        if (item.getListaCompra() == null || !item.getListaCompra().getId().equals(listaId)) {
+            redirectAttributes.addFlashAttribute("mensaje", "El item no pertenece a esta lista");
+            return "redirect:/listas/ver/" + listaId;
+        }
+
+        Estado pendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE").orElse(null);
+        if (pendiente == null) {
+            redirectAttributes.addFlashAttribute("mensaje", "No existe el estado PENDIENTE en la base de datos");
+            return "redirect:/listas/ver/" + listaId;
+        }
+
+        item.setEstado(pendiente);
+        itemListaCompraRepository.save(item);
+
+        redirectAttributes.addFlashAttribute("mensaje", "El item fue marcado como PENDIENTE");
         return "redirect:/listas/ver/" + listaId;
     }
 
