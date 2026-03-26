@@ -104,6 +104,56 @@ public class ListaCompraController {
         return "listas/ver";
     }
 
+    @PostMapping("/marcar-comprado/{id}")
+    public String marcarComoComprado(@PathVariable Long id,
+                                     RedirectAttributes redirectAttributes) {
+        Optional<ListaCompra> listaOpt = listaCompraRepository.findById(id);
+
+        if (listaOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "La lista no existe");
+            return "redirect:/listas";
+        }
+
+        Estado comprado = estadoRepository.findByNombreIgnoreCase("COMPRADO").orElse(null);
+
+        if (comprado == null) {
+            redirectAttributes.addFlashAttribute("mensaje", "No existe el estado COMPRADO en la base de datos");
+            return "redirect:/listas";
+        }
+
+        ListaCompra lista = listaOpt.get();
+        lista.setEstado(comprado);
+        listaCompraRepository.save(lista);
+
+        redirectAttributes.addFlashAttribute("mensaje", "Lista marcada como COMPRADO");
+        return "redirect:/listas";
+    }
+
+    @PostMapping("/marcar-pendiente/{id}")
+    public String marcarComoPendiente(@PathVariable Long id,
+                                      RedirectAttributes redirectAttributes) {
+        Optional<ListaCompra> listaOpt = listaCompraRepository.findById(id);
+
+        if (listaOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensaje", "La lista no existe");
+            return "redirect:/listas";
+        }
+
+        Estado pendiente = estadoRepository.findByNombreIgnoreCase("PENDIENTE").orElse(null);
+
+        if (pendiente == null) {
+            redirectAttributes.addFlashAttribute("mensaje", "No existe el estado PENDIENTE en la base de datos");
+            return "redirect:/listas";
+        }
+
+        ListaCompra lista = listaOpt.get();
+        lista.setEstado(pendiente);
+        listaCompraRepository.save(lista);
+
+        redirectAttributes.addFlashAttribute("mensaje", "Lista marcada como PENDIENTE");
+        return "redirect:/listas";
+    }
+
     @GetMapping("/{listaId}/items/nuevo")
     public String nuevoItem(@PathVariable Long listaId, Model model, RedirectAttributes redirectAttributes) {
         Optional<ListaCompra> listaOpt = listaCompraRepository.findById(listaId);
