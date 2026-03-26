@@ -104,7 +104,7 @@ public class ItemListaCompraController {
         item.setProducto(producto);
         item.setCantidad(formItem.getCantidad());
         item.setPeso(formItem.getPeso());
-        item.setPrecio(formItem.getPrecio());
+        item.setPrecio(formItem.getPrecio() != null ? formItem.getPrecio() : BigDecimal.ZERO);
         item.setObservacion(formItem.getObservacion());
 
         if (formItem.getId() == null) {
@@ -121,6 +121,8 @@ public class ItemListaCompraController {
         }
 
         itemListaCompraRepository.save(item);
+        recalcularPrecioLista(lista);
+
         redirectAttributes.addFlashAttribute("mensaje", "Item guardado correctamente");
         return "redirect:/listas/ver/" + listaId;
     }
@@ -246,8 +248,27 @@ public class ItemListaCompraController {
             return "redirect:/listas/ver/" + listaId;
         }
 
+        ListaCompra lista = item.getListaCompra();
+
         itemListaCompraRepository.delete(item);
+        recalcularPrecioLista(lista);
+
         redirectAttributes.addFlashAttribute("mensaje", "Item eliminado correctamente");
         return "redirect:/listas/ver/" + listaId;
+    }
+
+    private void recalcularPrecioLista(ListaCompra lista) {
+        BigDecimal total = BigDecimal.ZERO;
+
+        if (lista.getItems() != null) {
+            for (ItemListaCompra it : lista.getItems()) {
+                if (it.getPrecio() != null) {
+                    total = total.add(it.getPrecio());
+                }
+            }
+        }
+
+        lista.setPrecio(total);
+        listaCompraRepository.save(lista);
     }
 }

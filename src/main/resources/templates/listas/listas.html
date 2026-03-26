@@ -36,6 +36,7 @@
                             <th>Nombre</th>
                             <th>Fecha</th>
                             <th>Productos</th>
+                            <th>Importe</th>
                             <th class="text-center">Acciones</th>
                         </tr>
                         </thead>
@@ -54,6 +55,8 @@
                             <td th:text="${lista.fecha != null ? lista.fecha : '-'}"></td>
 
                             <td th:text="${lista.items != null ? #lists.size(lista.items) : 0}"></td>
+
+                            <td th:text="${lista.precio != null ? lista.precio : 0}"></td>
 
                             <td class="text-center">
                                 <div class="d-flex flex-wrap justify-content-center gap-2">
